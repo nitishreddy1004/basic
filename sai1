@@ -1,0 +1,45 @@
+WITH RECURSIVE
+split AS (
+  SELECT
+    NAME,
+    substr(NAME, 1, instr(NAME, '*') - 1) AS segment,
+    substr(NAME, instr(NAME, '*') + 1) AS rest,
+    1 AS pos
+  FROM TEST
+  UNION ALL
+  SELECT
+    NAME,
+    segment,
+    CASE WHEN instr(rest, '*') = 0 THEN '' ELSE substr(rest, instr(rest, '*') + 1) END,
+    pos + 1
+  FROM split
+  WHERE rest != ''
+),
+values AS (
+  SELECT
+    NAME,
+    segment,
+    pos,
+    CASE
+      WHEN instr(rest, '*') = 0 THEN rest
+      ELSE substr(rest, 1, instr(rest, '*') - 1)
+    END AS value
+  FROM split
+  WHERE pos > 1
+)
+SELECT
+  MAX(CASE WHEN segment = 'BAK' AND pos = 2 THEN value END) AS BAK_1,
+  MAX(CASE WHEN segment = 'BAK' AND pos = 3 THEN value END) AS BAK_2,
+  MAX(CASE WHEN segment = 'BAK' AND pos = 4 THEN value END) AS BAK_3,
+  MAX(CASE WHEN segment = 'BAK' AND pos = 5 THEN value END) AS BAK_4,
+  MAX(CASE WHEN segment = 'CTT' AND pos = 2 THEN value END) AS CTT_1,
+  MAX(CASE WHEN segment = 'GE' AND pos = 2 THEN value END) AS GE_1,
+  MAX(CASE WHEN segment = 'GE' AND pos = 3 THEN value END) AS GE_2,
+  MAX(CASE WHEN segment = 'PO1' AND pos = 2 THEN value END) AS PO1_1,
+  MAX(CASE WHEN segment = 'PO1' AND pos = 3 THEN value END) AS PO1_2,
+  MAX(CASE WHEN segment = 'PO1' AND pos = 4 THEN value END) AS PO1_3,
+  MAX(CASE WHEN segment = 'PO1' AND pos = 5 THEN value END) AS PO1_4,
+  MAX(CASE WHEN segment = 'PO1' AND pos = 6 THEN value END) AS PO1_5,
+  MAX(CASE WHEN segment = 'PO1' AND pos = 7 THEN value END) AS PO1_6,
+  MAX(CASE WHEN segment = 'PO1' AND pos = 8 THEN value END) AS PO1_7
+FROM values;
