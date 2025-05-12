@@ -1,0 +1,27 @@
+WITH split_parts AS (
+  SELECT
+    NAME,
+    SPLIT(NAME, '*') AS parts
+  FROM DATAFORCE.FOG.TEST
+),
+unnested AS (
+  SELECT
+    parts[0] AS segment,
+    NULLIF(f.value, '') AS value,
+    ROW_NUMBER() OVER (PARTITION BY parts[0] ORDER BY f.index) AS rn
+  FROM split_parts,
+  LATERAL FLATTEN(input => parts) f
+  WHERE f.index > 0
+),
+all_rows AS (
+  SELECT
+    rn,
+    MAX(CASE WHEN segment = 'BAK' THEN value END) AS BAK,
+    MAX(CASE WHEN segment = 'CTT' THEN value END) AS CTT,
+    MAX(CASE WHEN segment = 'GE' THEN value END) AS GE,
+    MAX(CASE WHEN segment = 'PO1' THEN value END) AS PO1
+  FROM unnested
+  GROUP BY rn
+  ORDER BY rn
+)
+SELECT * FROM all_rows;
